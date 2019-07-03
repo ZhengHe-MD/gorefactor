@@ -3,7 +3,6 @@
 this module provides some basic utilities for you to do code migration on large code base written in golang.
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/ZhengHe-MD/gorefactor)](https://goreportcard.com/report/github.com/ZhengHe-MD/gorefactor)
-[![Coverage Status](https://coveralls.io/repos/github/ZhengHe-MD/gorefactor/badge.svg?branch=master)](https://coveralls.io/github/ZhengHe-MD/gorefactor?branch=master)
 [![golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
 
 ## Installation
