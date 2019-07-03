@@ -46,28 +46,7 @@ func main() {
 }
 ```
 
-```go
-func main() {
-	df, _ := gorefactor.ParseSrcFileFromBytes([]byte(src))
-	
-	gorefactor.AddFieldToFuncDeclParams(df, "f", &dst.Field{
-    		Names: []*dst.Ident{dst.NewIdent("ctx")},
-    		Type: &dst.Ident{
-    			Name: "Context",
-    			Path: "context",
-    		},
-    	}, 0)
-    
-    gorefactor.AddArgToCallExpr(df, "f", &dst.CallExpr{
-        Fun: &dst.Ident{
-            Name: "TODO",
-            Path: "context",
-        },
-    }, 0)
-	
-	_ = gorefactor.FprintFile(os.Stdout, df)
-}
-```
+[examples/insert_context.go](/examples/insert_context.go)
 
 ## API
 
