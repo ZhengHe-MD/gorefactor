@@ -7,6 +7,8 @@ this module provides some basic utilities for you to do code migration on large 
 [![Coverage Status](https://coveralls.io/repos/github/ZhengHe-MD/gorefactor/badge.svg?branch=master)](https://coveralls.io/github/ZhengHe-MD/gorefactor?branch=master)
 [![golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
 [![godoc](https://godoc.org/github.com/ZhengHe-MD/gorefactor?status.svg)](https://godoc.org/github.com/ZhengHe-MD/gorefactor)
+[![GitHub license](https://img.shields.io/github/license/ZhengHe-MD/gorefactor.svg)](https://github.com/ZhengHe-MD/gorefactor/blob/master/LICENSE)
+![GitHub release](https://img.shields.io/github/release-pre/ZhengHe-MD/gorefactor.svg)
 
 ## Installation
 
