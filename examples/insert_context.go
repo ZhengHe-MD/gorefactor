@@ -7,17 +7,48 @@ import (
 	"os"
 )
 
+/*
+say we want to refactor the following code
+
+==================================
+package main
+
+func f() {}
+
+func main() {
+    f()
+    f()
+}
+==================================
+
+to
+
+==================================
+package main
+
+import "context"
+
+func f(ctx context.Context) {}
+
+func main() {
+    f(context.TODO())
+    f(context.TODO())
+}
+==================================
+
+ */
+
 func main() {
 	var src = `
-    package main
+    	package main
 
-    func f() {}
+		func f() {}
 
-    func main() {
-        f()
-        f()
-    }
-    `
+		func main() {
+			f()
+			f()
+		}
+		`
 
 	df, err := gorefactor.ParseSrcFileFromBytes([]byte(src))
 	if err != nil {
