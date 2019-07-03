@@ -2,6 +2,7 @@
 
 this module provides some basic utilities for you to do code migration on large code base written in golang.
 
+[![Build Status](https://travis-ci.org/ZhengHe-MD/gorefactor.svg?branch=master)](https://travis-ci.org/ZhengHe-MD/gorefactor)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ZhengHe-MD/gorefactor)](https://goreportcard.com/report/github.com/ZhengHe-MD/gorefactor)
 [![golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
 
