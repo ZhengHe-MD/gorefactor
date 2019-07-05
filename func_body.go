@@ -134,14 +134,14 @@ func addStmtToFuncBodyRelativeTo(df *dst.File, funcName string, stmt, refStmt ds
 	return
 }
 
-// AddNodeToFuncBodyBefore adds given statement, to the function body, before the position of refStmt.
+// AddStmtToFuncBodyBefore adds given statement, to the function body, before the position of refStmt.
 // if refStmt not found, nothing will happen
-func AddNodeToFuncBodyBefore(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) {
+func AddStmtToFuncBodyBefore(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) {
 	return addStmtToFuncBodyRelativeTo(df, funcName, stmt, refStmt, relativeDirectionBefore)
 }
 
-// AddNodeToFuncBodyAfter adds given statement, to the function body, after the position of refStmt,
+// AddStmtToFuncBodyAfter adds given statement, to the function body, after the position of refStmt,
 // if refStmt not found, nothing will happen
-func AddNodeToFuncBodyAfter(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) {
+func AddStmtToFuncBodyAfter(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) {
 	return addStmtToFuncBodyRelativeTo(df, funcName, stmt, refStmt, relativeDirectionAfter)
 }
