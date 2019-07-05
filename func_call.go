@@ -5,6 +5,7 @@ import (
 	"github.com/dave/dst/dstutil"
 )
 
+// check if the arguments of the function call has given arg
 func HasArgInCallExpr(df *dst.File, funcName string, arg dst.Expr) (ret bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -37,6 +38,8 @@ func HasArgInCallExpr(df *dst.File, funcName string, arg dst.Expr) (ret bool) {
 	return
 }
 
+// delete any arg, in the function call's argument list, that is semantically
+// equal to the given arg.
 func DeleteArgFromCallExpr(df *dst.File, funcName string, arg dst.Expr) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -73,6 +76,7 @@ func DeleteArgFromCallExpr(df *dst.File, funcName string, arg dst.Expr) (modifie
 	return
 }
 
+// add given arg, to the function call's argument list, in the given position
 func AddArgToCallExpr(df *dst.File, funcName string, arg dst.Expr, pos int) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()

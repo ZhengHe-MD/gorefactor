@@ -5,6 +5,7 @@ import (
 	"github.com/dave/dst/dstutil"
 )
 
+// check if the body of function has given statement
 func HasStmtInsideFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (ret bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -28,6 +29,8 @@ func HasStmtInsideFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (ret bo
 	return
 }
 
+// delete any statement, inside the body of function, that is semantically
+// equal to the given statement.
 func DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -57,6 +60,7 @@ func DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modif
 	return
 }
 
+// add given statement, to the body of function, in the given position
 func AddStmtToFuncBody(df *dst.File, funcName string, stmt dst.Stmt, pos int) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -81,10 +85,12 @@ func AddStmtToFuncBody(df *dst.File, funcName string, stmt dst.Stmt, pos int) (m
 	return
 }
 
+// add given statement, to the start of function body
 func AddStmtToFuncBodyStart(df *dst.File, funcName string, stmt dst.Stmt) (modified bool) {
 	return AddStmtToFuncBody(df, funcName, stmt, 0)
 }
 
+// add given statement, to the end of function body
 func AddStmtToFuncBodyEnd(df *dst.File, funcName string, stmt dst.Stmt) (modified bool) {
 	return AddStmtToFuncBody(df, funcName, stmt, -1)
 }
@@ -128,10 +134,14 @@ func addStmtToFuncBodyRelativeTo(df *dst.File, funcName string, stmt, refStmt ds
 	return
 }
 
+// add given statement, to the function body, before the position of refStmt. if refStmt
+// not found, nothing will happen
 func AddNodeToFuncBodyBefore(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) {
 	return addStmtToFuncBodyRelativeTo(df, funcName, stmt, refStmt, relativeDirectionBefore)
 }
 
+// add given statement, to the function body, after the position of refStmt, if refStmt
+// not found, nothing will happen
 func AddNodeToFuncBodyAfter(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) {
 	return addStmtToFuncBodyRelativeTo(df, funcName, stmt, refStmt, relativeDirectionAfter)
 }
