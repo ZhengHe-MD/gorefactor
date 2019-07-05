@@ -13,7 +13,7 @@ import (
 
 var defaultFileSet = token.NewFileSet()
 
-// given go src file, in the form of bytes, and parse it into *dst.File
+// ParseSrcFileFromBytes parses the given go src file, in the form of bytes, into *dst.File
 func ParseSrcFileFromBytes(src []byte) (df *dst.File, err error) {
 	dec := decorator.NewDecoratorWithImports(
 		defaultFileSet,
@@ -22,7 +22,7 @@ func ParseSrcFileFromBytes(src []byte) (df *dst.File, err error) {
 	return dec.Parse(src)
 }
 
-// given go src filename, in the form of valid path, and parse it into *dst.File
+// ParseSrcFile parses the given go src filename, in the form of valid path, into *dst.File
 func ParseSrcFile(filename string) (df *dst.File, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -38,7 +38,7 @@ func ParseSrcFile(filename string) (df *dst.File, err error) {
 	return ParseSrcFileFromBytes(src)
 }
 
-// given a io.Writer and *dst.File, write the *dst.File out to io.Writer
+// FprintFile writes the *dst.File out to io.Writer
 func FprintFile(out io.Writer, df *dst.File) error {
 	dec := decorator.NewRestorerWithImports("main", guess.New())
 	return dec.Fprint(out, df)

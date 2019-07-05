@@ -5,7 +5,7 @@ import (
 	"github.com/dave/dst/dstutil"
 )
 
-// check if the declaration params of the function, contains the given field
+// HasFieldInFuncDeclParams checks if the declaration params of the function, contains the given field
 func HasFieldInFuncDeclParams(df *dst.File, funcName string, field *dst.Field) (ret bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -29,8 +29,8 @@ func HasFieldInFuncDeclParams(df *dst.File, funcName string, field *dst.Field) (
 	return
 }
 
-// delete any field, in the declaration params of the function, that is semantically
-// equal to given field
+// DeleteFieldFromFuncDeclParams deletes any field, in the declaration params of the function,
+// that is semantically equal to given field
 func DeleteFieldFromFuncDeclParams(df *dst.File, funcName string, field *dst.Field) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
@@ -58,7 +58,7 @@ func DeleteFieldFromFuncDeclParams(df *dst.File, funcName string, field *dst.Fie
 	return
 }
 
-// add given field, to the declaration params of the function, in the given position
+// AddFieldToFuncDeclParams adds given field, to the declaration params of the function, in the given position
 func AddFieldToFuncDeclParams(df *dst.File, funcName string, field *dst.Field, pos int) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
