@@ -113,10 +113,10 @@ func addStmtToFuncBodyRelativeTo(df *dst.File, funcName string, stmt, refStmt ds
 					if nodesEqual(ss, refStmt) {
 						switch relDirection {
 						case relativeDirectionBefore:
-							newStmtList = append(newStmtList, stmt, ss)
+							newStmtList = append(newStmtList, dst.Clone(stmt).(dst.Stmt), ss)
 							modified = true
 						case relativeDirectionAfter:
-							newStmtList = append(newStmtList, ss, stmt)
+							newStmtList = append(newStmtList, ss, dst.Clone(stmt).(dst.Stmt))
 							modified = true
 						}
 					} else {

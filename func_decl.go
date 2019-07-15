@@ -71,7 +71,7 @@ func AddFieldToFuncDeclParams(df *dst.File, funcName string, field *dst.Field, p
 				pos = normalizePos(pos, len(fieldList))
 				funcType.Params.List = append(
 					fieldList[:pos],
-					append([]*dst.Field{field}, fieldList[pos:]...)...)
+					append([]*dst.Field{dst.Clone(field).(*dst.Field)}, fieldList[pos:]...)...)
 				modified = true
 				return false
 			}
