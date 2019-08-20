@@ -60,6 +60,50 @@ func DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modif
 	return
 }
 
+// DeleteCallExprFromFuncBody deletes any SelectorExpr equal to the given one, inside the body of function.
+func DeleteSelectorExprFromFuncBody(df *dst.File, funcName string, selectorExpr dst.Expr) (modified bool) {
+	var inside bool
+	var found bool
+
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
+				inside = true
+			}
+		case *dst.SelectorExpr:
+			nn := node.(*dst.SelectorExpr)
+			if inside && nodesEqual(nn, selectorExpr) {
+				found = true
+			}
+		}
+
+		return true
+	}
+
+	post := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName && inside {
+				inside = false
+			}
+		case *dst.ExprStmt:
+			if found {
+				found, modified = false, true
+				c.Delete()
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
+	return
+}
+
 // AddStmtToFuncBody adds given statement, to the body of function, in the given position
 func AddStmtToFuncBody(df *dst.File, funcName string, stmt dst.Stmt, pos int) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {

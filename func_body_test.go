@@ -182,6 +182,95 @@ func TestDeleteStmtFromFuncBody(t *testing.T) {
 	})
 }
 
+func TestDeleteSelectorExprFromFuncBody(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		var src = `
+		package main
+
+		func A() {
+			fmt.Printf("%s", "foo")
+		}
+
+		func main() {
+			fmt.Println()
+			fmt.Printf("%s", "bar")
+			fmt.Printf("%s", "baz")
+			fmt.Println()
+		}
+		`
+
+		var expected = `
+		package main
+
+		func A() {
+			fmt.Printf("%s", "foo")
+		}
+
+		func main() {
+			fmt.Println()
+			fmt.Println()
+		}
+		`
+
+		printSelector := &dst.SelectorExpr{
+			X:    dst.NewIdent("fmt"),
+			Sel:  dst.NewIdent("Printf"),
+		}
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+
+		assert.Equal(t, true, DeleteSelectorExprFromFuncBody(df, "main", printSelector))
+		buf := printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
+
+	t.Run("complex", func(t *testing.T) {
+		var src = `
+		package main
+
+		func (m *TestServiceImpl) Hello(req *HelloReq) (r *HelloRes, err error) {
+			fun := "TestServiceImpl.Hello -->"
+
+			st := stime.NewTimeStat()
+			defer func() {
+				dur := st.Duration()
+				log.Infof("%s req:%v tm:%d", fun, req, dur)
+				monitor.Stat("RPC-Hello", dur)
+			}()
+
+			return logic.HandleTest.Hello(req), nil
+		}
+		`
+
+		var expected = `
+		package main
+
+		func (m *TestServiceImpl) Hello(req *HelloReq) (r *HelloRes, err error) {
+			fun := "TestServiceImpl.Hello -->"
+
+			st := stime.NewTimeStat()
+			defer func() {
+				dur := st.Duration()
+				monitor.Stat("RPC-Hello", dur)
+			}()
+
+			return logic.HandleTest.Hello(req), nil
+		}
+		`
+
+		printSelector := &dst.SelectorExpr{
+			X:    dst.NewIdent("log"),
+			Sel:  dst.NewIdent("Infof"),
+		}
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+
+		assert.Equal(t, true, DeleteSelectorExprFromFuncBody(df, "Hello", printSelector))
+		buf := printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
+}
+
 func TestAddStmtToFuncBody(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		var src = `
