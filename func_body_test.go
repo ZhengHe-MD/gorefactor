@@ -382,4 +382,74 @@ func TestAddStmtToFuncBodyRelativeTo(t *testing.T) {
 			assertCodesEqual(t, fmt.Sprintf(expectedTemplate, c.expectedBody), buf.String())
 		}
 	})
+
+	t.Run("nested", func(t *testing.T) {
+		var src = `
+		package main
+		
+		func main() {
+			a := 1
+			b := 2
+			defer func() {
+				d := 4
+			}()
+		}
+		`
+
+		var expectedTemplate = `
+		package main
+
+		func main() {
+			a := 1
+			b := 2
+			defer func() {
+				%s
+			}()
+		}
+		`
+
+		cstmt := &dst.AssignStmt{
+			Lhs: []dst.Expr{dst.NewIdent("c")},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{&dst.BasicLit{
+				Kind:  token.INT,
+				Value: "3",
+			}},
+		}
+
+		dstmt := &dst.AssignStmt{
+			Lhs: []dst.Expr{dst.NewIdent("d")},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{&dst.BasicLit{
+				Kind:  token.INT,
+				Value: "4",
+			}},
+		}
+
+		estmt := &dst.AssignStmt{
+			Lhs: []dst.Expr{dst.NewIdent("e")},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{&dst.BasicLit{
+				Kind:  token.INT,
+				Value: "5",
+			}},
+		}
+
+		cases := []struct {
+			direction    int
+			stmt 		 dst.Stmt
+			refStmt      dst.Stmt
+			expectedBody string
+		}{
+			{relativeDirectionBefore, cstmt, dstmt, "c := 3\nd := 4"},
+			{relativeDirectionAfter, estmt, dstmt, "d := 4\ne := 5"},
+		}
+
+		for _, c := range cases {
+			df, _ := ParseSrcFileFromBytes([]byte(src))
+			assert.True(t, addStmtToFuncBodyRelativeTo(df, "main", c.stmt, c.refStmt, c.direction))
+			buf := printToBuf(df)
+			assertCodesEqual(t, fmt.Sprintf(expectedTemplate, c.expectedBody), buf.String())
+		}
+	})
 }

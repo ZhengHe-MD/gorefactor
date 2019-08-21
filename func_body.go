@@ -145,36 +145,44 @@ const (
 )
 
 func addStmtToFuncBodyRelativeTo(df *dst.File, funcName string, stmt, refStmt dst.Stmt, relDirection int) (modified bool) {
+	var inside bool
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.FuncDecl:
 			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
-				funcBody := nn.Body
-				var newStmtList []dst.Stmt
-				for _, ss := range funcBody.List {
-					if nodesEqual(ss, refStmt) {
-						switch relDirection {
-						case relativeDirectionBefore:
-							newStmtList = append(newStmtList, dst.Clone(stmt).(dst.Stmt), ss)
-							modified = true
-						case relativeDirectionAfter:
-							newStmtList = append(newStmtList, ss, dst.Clone(stmt).(dst.Stmt))
-							modified = true
-						}
-					} else {
-						newStmtList = append(newStmtList, ss)
-					}
+				inside = true
+			}
+		case dst.Stmt:
+			ss := node.(dst.Stmt)
+			if inside && nodesEqual(ss, refStmt) {
+				switch relDirection {
+				case relativeDirectionBefore:
+					c.InsertBefore(dst.Clone(stmt))
+					modified = true
+				case relativeDirectionAfter:
+					c.InsertAfter(dst.Clone(stmt))
+					modified = true
 				}
-				funcBody.List = newStmtList
-				return false
 			}
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName && inside {
+				inside = false
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }
 
