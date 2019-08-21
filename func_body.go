@@ -7,56 +7,76 @@ import (
 
 // HasStmtInsideFuncBody checks if the body of function has given statement
 func HasStmtInsideFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (ret bool) {
+	var inside bool
+
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.FuncDecl:
 			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
-				funcBody := nn.Body
-				for _, ss := range funcBody.List {
-					if nodesEqual(ss, stmt) {
-						ret = true
-					}
-				}
-				return false
+				inside = true
+			}
+		case dst.Stmt:
+			if inside && nodesEqual(node, stmt) {
+				ret = true
 			}
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName && inside {
+				inside = false
+			}
+		}
+
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }
 
 // DeleteStmtFromFuncBody deletes any statement, inside the body of function,
 // that is semantically equal to the given statement.
 func DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modified bool) {
+	var inside bool
+
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.FuncDecl:
 			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
-				funcBody := nn.Body
-
-				var newList []dst.Stmt
-				for _, ss := range funcBody.List {
-					if !nodesEqual(ss, stmt) {
-						newList = append(newList, ss)
-					} else {
-						modified = true
-					}
-				}
-
-				funcBody.List = newList
-				return false
+				inside = true
+			}
+		case dst.Stmt:
+			if inside && nodesEqual(node, stmt) {
+				c.Delete()
+				modified = true
 			}
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName && inside {
+				inside = false
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }
 

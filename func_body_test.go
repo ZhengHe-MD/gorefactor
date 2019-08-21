@@ -15,6 +15,10 @@ func TestHasStmtInsideFuncBody(t *testing.T) {
 
 		import "fmt"
 
+		func B() {
+			c := 1
+		}
+
 		func main() {
 			a := 1
 			b := 1
@@ -64,6 +68,17 @@ func TestHasStmtInsideFuncBody(t *testing.T) {
 					Value: "2",
 				}},
 			}, false},
+			{
+				&dst.AssignStmt{
+					Lhs:  []dst.Expr{dst.NewIdent("c")},
+					Tok:  token.DEFINE,
+					Rhs:  []dst.Expr{&dst.BasicLit{
+						Kind: token.INT,
+						Value: "1",
+					}},
+					Decs: dst.AssignStmtDecorations{},
+				}, false,
+			},
 		}
 
 		df, _ := ParseSrcFileFromBytes([]byte(src))
@@ -71,6 +86,36 @@ func TestHasStmtInsideFuncBody(t *testing.T) {
 		for _, c := range cases {
 			assert.Equal(t, c.expected, HasStmtInsideFuncBody(df, "main", c.stmt))
 		}
+	})
+
+	t.Run("nested", func(t *testing.T) {
+		var src = `
+		package main
+		
+		import "fmt"
+
+		func main() {
+			a := 1
+			b := 1
+			defer func() {
+				c := 3
+				fmt.Println(c)
+			}()
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		stmt := &dst.AssignStmt{
+			Lhs:  []dst.Expr{dst.NewIdent("c")},
+			Tok:  token.DEFINE,
+			Rhs:  []dst.Expr{&dst.BasicLit{
+				Kind: token.INT,
+				Value: "3",
+			}},
+			Decs: dst.AssignStmtDecorations{},
+		}
+
+		assert.Equal(t, true, HasStmtInsideFuncBody(df, "main", stmt))
 	})
 }
 
@@ -142,6 +187,54 @@ func TestDeleteStmtFromFuncBody(t *testing.T) {
 			buf := printToBuf(df)
 			assertCodesEqual(t, fmt.Sprintf(expectedTemplate, c.expectedBody), buf.String())
 		}
+	})
+
+	t.Run("nested", func(t *testing.T) {
+		var src = `
+		package main
+
+		import (
+			"fmt"
+		)
+
+		func main() {
+			a := 1
+			b := 1
+			defer func() {
+				c := 1
+				fmt.Println("hello world")
+			}()
+		}
+		`
+		var expected = `
+		package main
+
+		import (
+			"fmt"
+		)
+
+		func main() {
+			a := 1
+			b := 1
+			defer func() {
+				fmt.Println("hello world")
+			}()
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		stmt := &dst.AssignStmt{
+			Lhs:  []dst.Expr{dst.NewIdent("c")},
+			Tok:  token.DEFINE,
+			Rhs:  []dst.Expr{&dst.BasicLit{
+				Kind: token.INT,
+				Value: "1",
+			}},
+			Decs: dst.AssignStmtDecorations{},
+		}
+		assert.Equal(t, true, DeleteStmtFromFuncBody(df, "main", stmt))
+		buf := printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
 	})
 
 	t.Run("multiple", func(t *testing.T) {
