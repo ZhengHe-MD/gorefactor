@@ -505,4 +505,42 @@ func TestAddArgToCallExpr(t *testing.T) {
 			assertCodesEqual(t, expected, buf.String())
 		}
 	})
+
+	t.Run("complex case 1", func(t *testing.T) {
+		var src = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContextV2(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+ 		`
+
+		var expected = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContextV2(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(fctx, ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		var buf *bytes.Buffer
+		assert.True(t, true, AddArgToCallExpr(df, "fn", dst.NewIdent("fctx"), 0))
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
 }

@@ -66,7 +66,19 @@ func nodesEqual(a, b dst.Node) (ret bool) {
 			return false
 		}
 
+		if len(na.Names) == 0 {
+			return ok && nodesEqual(na.Type, nb.Type)
+		}
 		return ok && nodesEqual(na.Names[0], nb.Names[0]) && nodesEqual(na.Type, nb.Type)
+
+	case *dst.FuncType:
+		na := a.(*dst.FuncType)
+		nb, ok := b.(*dst.FuncType)
+
+		if (len(na.Params.List) != len(nb.Params.List)) || (len(na.Results.List) != len(nb.Results.List)) {
+			return false
+		}
+		return ok && fieldListsEqual(na.Params, nb.Params) && fieldListsEqual(na.Results, nb.Results)
 	case *dst.StarExpr:
 		na := a.(*dst.StarExpr)
 		nb, ok := b.(*dst.StarExpr)

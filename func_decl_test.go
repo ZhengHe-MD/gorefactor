@@ -225,6 +225,65 @@ func TestDeleteFieldFromFuncDeclParams(t *testing.T) {
 			assertCodesEqual(t, fmt.Sprintf(expectedTemplate, c.expectedArgs), buf.String())
 		}
 	})
+
+	t.Run("decl inside decl2", func(t *testing.T) {
+		var src = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+		return clientThrift.RpcWithContext(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+		var expected = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration) error {
+		return clientThrift.RpcWithContext(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		fn := &dst.Field{
+			Names: []*dst.Ident{dst.NewIdent("fn")},
+			Type: &dst.FuncType{
+				Params: &dst.FieldList{
+					List: []*dst.Field{
+						{
+							Type: &dst.StarExpr{
+								X: dst.NewIdent("AccountServiceClient"),
+							},
+						},
+					},
+				},
+				Results: &dst.FieldList{
+					List: []*dst.Field{
+						{
+							Type: dst.NewIdent("error"),
+						},
+					},
+				},
+			},
+		}
+		modified := DeleteFieldFromFuncDeclParams(df, "rpc", fn)
+		assert.Equal(t, true, modified)
+		var buf *bytes.Buffer
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
 }
 
 func TestAddFieldToFuncDeclParams(t *testing.T) {
@@ -301,5 +360,144 @@ func TestAddFieldToFuncDeclParams(t *testing.T) {
 			buf = printToBuf(df)
 			assertCodesEqual(t, expected, buf.String())
 		}
+	})
+}
+
+func TestSetMethodOnReceiver(t *testing.T) {
+	t.Run("case1: fmt", func(t *testing.T) {
+		var src = `
+		package main
+
+		import "fmt"
+		
+		func main() {
+			fmt.Println()
+		}
+		`
+
+		var expected = `
+		package main
+
+		import "fmt"
+
+		func main() {
+			fmt.Panicln()
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		var buf *bytes.Buffer
+		assert.True(t, SetMethodOnReceiver(df, "fmt", "Println", "Panicln"))
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
+
+	t.Run("case2", func(t *testing.T) {
+		var src = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContext(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+
+		var expected = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContextV2(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		var buf *bytes.Buffer
+		assert.True(t, SetMethodOnReceiver(df, "clientThrift", "RpcWithContext", "RpcWithContextV2"))
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
+}
+
+func TestAddFieldToFuncLitParams(t *testing.T) {
+	t.Run("case 1", func(t *testing.T) {
+		var src = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContext(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+
+		func UpdateUserStrInfo(ctx context.Context, req *UserStrInfoRequest) (r *UpdateUserInfoRes, err error) {
+			tctx := trace.NewThriftUtilContextFromContext(ctx)
+			if req == nil {
+				return nil, fmt.Errorf("req nil")
+			}
+			err = rpc(ctx, req.Item, time.Millisecond*3000,
+				func(c *AccountServiceClient) error {
+					r, err = c.UpdateUserStrInfo(req, tctx)
+					return err
+				},
+			)
+			return
+		}
+		`
+
+		var expected = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContext(ctx, hashKey, timeout, func(fctx context.Context, c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		
+		func UpdateUserStrInfo(ctx context.Context, req *UserStrInfoRequest) (r *UpdateUserInfoRes, err error) {
+			tctx := trace.NewThriftUtilContextFromContext(ctx)
+			if req == nil {
+				return nil, fmt.Errorf("req nil")
+			}
+			err = rpc(ctx, req.Item, time.Millisecond*3000,
+				func(fctx context.Context, c *AccountServiceClient) error {
+					r, err = c.UpdateUserStrInfo(req, tctx)
+					return err
+				},
+			)
+			return
+		}
+		`
+
+		var buf *bytes.Buffer
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		assert.True(t, AddFieldToFuncLitParams(df, &dst.Field{
+			Names: []*dst.Ident{dst.NewIdent("fctx")},
+			Type:  dst.NewIdent("context.Context"),
+		}, 0))
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
 	})
 }

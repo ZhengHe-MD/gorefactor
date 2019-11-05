@@ -111,3 +111,42 @@ func AddArgToCallExpr(df *dst.File, funcName string, arg dst.Expr, pos int) (mod
 	dstutil.Apply(df, pre, nil)
 	return
 }
+
+func SetMethodOnReceiver(df *dst.File, receiver, oldMethod, newMethod string) (modified bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.CallExpr:
+			nn := node.(*dst.CallExpr)
+
+			switch nn.Fun.(type) {
+			case *dst.Ident:
+				si := nn.Fun.(*dst.Ident)
+				if si.Path == receiver && si.Name == oldMethod {
+					si.Name = newMethod
+					modified = true
+				}
+			case *dst.SelectorExpr:
+				se := nn.Fun.(*dst.SelectorExpr)
+
+				// TODO: deal with other se.X type
+				switch se.X.(type) {
+				case *dst.Ident:
+					xi := se.X.(*dst.Ident)
+					if xi.Name != receiver {
+						return true
+					}
+				}
+				if se.Sel.Name == oldMethod {
+					se.Sel.Name = newMethod
+					modified = true
+				}
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, nil)
+	return
+}
