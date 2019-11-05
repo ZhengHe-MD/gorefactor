@@ -70,10 +70,10 @@ func TestHasStmtInsideFuncBody(t *testing.T) {
 			}, false},
 			{
 				&dst.AssignStmt{
-					Lhs:  []dst.Expr{dst.NewIdent("c")},
-					Tok:  token.DEFINE,
-					Rhs:  []dst.Expr{&dst.BasicLit{
-						Kind: token.INT,
+					Lhs: []dst.Expr{dst.NewIdent("c")},
+					Tok: token.DEFINE,
+					Rhs: []dst.Expr{&dst.BasicLit{
+						Kind:  token.INT,
 						Value: "1",
 					}},
 					Decs: dst.AssignStmtDecorations{},
@@ -106,10 +106,10 @@ func TestHasStmtInsideFuncBody(t *testing.T) {
 
 		df, _ := ParseSrcFileFromBytes([]byte(src))
 		stmt := &dst.AssignStmt{
-			Lhs:  []dst.Expr{dst.NewIdent("c")},
-			Tok:  token.DEFINE,
-			Rhs:  []dst.Expr{&dst.BasicLit{
-				Kind: token.INT,
+			Lhs: []dst.Expr{dst.NewIdent("c")},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{&dst.BasicLit{
+				Kind:  token.INT,
 				Value: "3",
 			}},
 			Decs: dst.AssignStmtDecorations{},
@@ -224,10 +224,10 @@ func TestDeleteStmtFromFuncBody(t *testing.T) {
 
 		df, _ := ParseSrcFileFromBytes([]byte(src))
 		stmt := &dst.AssignStmt{
-			Lhs:  []dst.Expr{dst.NewIdent("c")},
-			Tok:  token.DEFINE,
-			Rhs:  []dst.Expr{&dst.BasicLit{
-				Kind: token.INT,
+			Lhs: []dst.Expr{dst.NewIdent("c")},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{&dst.BasicLit{
+				Kind:  token.INT,
 				Value: "1",
 			}},
 			Decs: dst.AssignStmtDecorations{},
@@ -306,8 +306,8 @@ func TestDeleteSelectorExprFromFuncBody(t *testing.T) {
 		`
 
 		printSelector := &dst.SelectorExpr{
-			X:    dst.NewIdent("fmt"),
-			Sel:  dst.NewIdent("Printf"),
+			X:   dst.NewIdent("fmt"),
+			Sel: dst.NewIdent("Printf"),
 		}
 
 		df, _ := ParseSrcFileFromBytes([]byte(src))
@@ -352,8 +352,8 @@ func TestDeleteSelectorExprFromFuncBody(t *testing.T) {
 		`
 
 		printSelector := &dst.SelectorExpr{
-			X:    dst.NewIdent("log"),
-			Sel:  dst.NewIdent("Infof"),
+			X:   dst.NewIdent("log"),
+			Sel: dst.NewIdent("Infof"),
 		}
 
 		df, _ := ParseSrcFileFromBytes([]byte(src))
@@ -530,7 +530,7 @@ func TestAddStmtToFuncBodyRelativeTo(t *testing.T) {
 
 		cases := []struct {
 			direction    int
-			stmt 		 dst.Stmt
+			stmt         dst.Stmt
 			refStmt      dst.Stmt
 			expectedBody string
 		}{

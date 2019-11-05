@@ -6,12 +6,16 @@ import (
 )
 
 // HasArgInCallExpr checks if the arguments of the function call has given arg
-func HasArgInCallExpr(df *dst.File, funcName string, arg dst.Expr) (ret bool) {
+func HasArgInCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) (ret bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.CallExpr:
+			if !scope.IsInScope() {
+				return true
+			}
+
 			var found bool
 			nn := node.(*dst.CallExpr)
 			if ie, ok := nn.Fun.(*dst.Ident); ok && ie.Name == funcName {
@@ -30,11 +34,18 @@ func HasArgInCallExpr(df *dst.File, funcName string, arg dst.Expr) (ret bool) {
 				}
 				return false
 			}
+		default:
+			scope.TryEnterScope(node)
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		scope.TryLeaveScope(c.Node())
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }
 
