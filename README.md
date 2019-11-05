@@ -64,3 +64,7 @@ HasFieldInFuncDeclParams(df *dst.File, funcName string, field *dst.Field) (ret b
 DeleteFieldFromFuncDeclParams(df *dst.File, funcName string, field *dst.Field) (modified bool)
 AddFieldToFuncDeclParams(df *dst.File, funcName string, field *dst.Field, pos int) (modified bool)
 ```
+
+## TODO
+
+-[ ] support scope
