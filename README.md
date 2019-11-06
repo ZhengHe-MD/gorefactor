@@ -41,20 +41,26 @@ FprintFile(out io.Writer, df *dst.File) error
 HasStmtInsideFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (ret bool)
 DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modified bool)
 AddStmtToFuncBody(df *dst.File, funcName string, stmt dst.Stmt, pos int) (modified bool)
-AddStmtToFuncLitBody(df *dst.File, stmt dst.Stmt, pos int) (modified bool)
 AddStmtToFuncBodyStart(df *dst.File, funcName string, stmt dst.Stmt) (modified bool)
 AddStmtToFuncBodyEnd(df *dst.File, funcName string, stmt dst.Stmt) (modified bool)
 AddStmtToFuncBodyBefore(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool) 
 AddStmtToFuncBodyAfter(df *dst.File, funcName string, stmt, refStmt dst.Stmt) (modified bool)
 ```
 
+### function lit utilities
+
+```
+AddStmtToFuncLitBody(df *dst.File, scope Scope, stmt dst.Stmt, pos int) (modified bool)
+AddFieldToFuncLitParams(df *dst.File, scope Scope, field *dst.Field, pos int) (modified bool)
+```
+
 ### function call utilities
 
 ```
-HasArgInCallExpr(df *dst.File, funcName string, arg dst.Expr) (ret bool)
-DeleteArgFromCallExpr(df *dst.File, funcName string, arg dst.Expr) (modified bool)
-AddArgToCallExpr(df *dst.File, funcName string, arg dst.Expr, pos int) (modified bool)
-SetMethodOnReceiver(df *dst.File, receiver, oldMethod, newMethod string) (modified bool)
+HasArgInCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) (ret bool)
+DeleteArgFromCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) (modified bool)
+AddArgToCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr, pos int) (modified bool)
+SetMethodOnReceiver(df *dst.File, scope Scope, receiver, oldMethod, newMethod string) (modified bool)
 ```
 
 ### function declaration utilities

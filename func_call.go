@@ -51,12 +51,16 @@ func HasArgInCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) 
 
 // DeleteArgFromCallExpr deletes any arg, in the function call's argument list,
 // that is semantically equal to the given arg.
-func DeleteArgFromCallExpr(df *dst.File, funcName string, arg dst.Expr) (modified bool) {
+func DeleteArgFromCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.CallExpr:
+			if !scope.IsInScope() {
+				return true
+			}
+
 			var found bool
 			nn := node.(*dst.CallExpr)
 			if ie, ok := nn.Fun.(*dst.Ident); ok && ie.Name == funcName {
@@ -79,23 +83,33 @@ func DeleteArgFromCallExpr(df *dst.File, funcName string, arg dst.Expr) (modifie
 				nn.Args = newArgs
 				return false
 			}
+		default:
+			scope.TryEnterScope(node)
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		scope.TryLeaveScope(c.Node())
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }
 
 // AddArgToCallExpr adds given arg, to the function call's argument list, in the given position
-func AddArgToCallExpr(df *dst.File, funcName string, arg dst.Expr, pos int) (modified bool) {
+func AddArgToCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr, pos int) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.CallExpr:
-			nn := node.(*dst.CallExpr)
+			if !scope.IsInScope() {
+				return true
+			}
 
+			nn := node.(*dst.CallExpr)
 			var ce *dst.CallExpr
 
 			if ie, ok := nn.Fun.(*dst.Ident); ok && ie.Name == funcName {
@@ -115,20 +129,30 @@ func AddArgToCallExpr(df *dst.File, funcName string, arg dst.Expr, pos int) (mod
 				modified = true
 				return false
 			}
+		default:
+			scope.TryEnterScope(node)
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		scope.TryLeaveScope(c.Node())
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }
 
-func SetMethodOnReceiver(df *dst.File, receiver, oldMethod, newMethod string) (modified bool) {
+func SetMethodOnReceiver(df *dst.File, scope Scope, receiver, oldMethod, newMethod string) (modified bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
 		switch node.(type) {
 		case *dst.CallExpr:
+			if !scope.IsInScope() {
+				return true
+			}
 			nn := node.(*dst.CallExpr)
 
 			switch nn.Fun.(type) {
@@ -154,10 +178,17 @@ func SetMethodOnReceiver(df *dst.File, receiver, oldMethod, newMethod string) (m
 					modified = true
 				}
 			}
+		default:
+			scope.TryEnterScope(node)
 		}
 		return true
 	}
 
-	dstutil.Apply(df, pre, nil)
+	post := func(c *dstutil.Cursor) bool {
+		scope.TryLeaveScope(c.Node())
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
 	return
 }

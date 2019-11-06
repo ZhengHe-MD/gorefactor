@@ -149,28 +149,6 @@ func AddStmtToFuncBody(df *dst.File, funcName string, stmt dst.Stmt, pos int) (m
 	return
 }
 
-func AddStmtToFuncLitBody(df *dst.File, stmt dst.Stmt, pos int) (modified bool) {
-	pre := func(c *dstutil.Cursor) bool {
-		node := c.Node()
-
-		switch node.(type) {
-		case *dst.FuncLit:
-			nn := node.(*dst.FuncLit)
-			stmtList := nn.Body.List
-			pos = normalizePos(pos, len(stmtList))
-
-			nn.Body.List = append(
-				stmtList[:pos],
-				append([]dst.Stmt{dst.Clone(stmt).(dst.Stmt)}, stmtList[pos:]...)...)
-			modified = true
-		}
-		return true
-	}
-
-	dstutil.Apply(df, pre, nil)
-	return
-}
-
 // AddStmtToFuncBodyStart adds given statement, to the start of function body
 func AddStmtToFuncBodyStart(df *dst.File, funcName string, stmt dst.Stmt) (modified bool) {
 	return AddStmtToFuncBody(df, funcName, stmt, 0)

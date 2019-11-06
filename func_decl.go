@@ -84,24 +84,4 @@ func AddFieldToFuncDeclParams(df *dst.File, funcName string, field *dst.Field, p
 	return
 }
 
-func AddFieldToFuncLitParams(df *dst.File, field *dst.Field, pos int) (modified bool) {
-	pre := func(c *dstutil.Cursor) bool {
-		node := c.Node()
 
-		switch node.(type) {
-		case *dst.FuncLit:
-			nn := node.(*dst.FuncLit)
-
-			fieldList := nn.Type.Params.List
-			pos = normalizePos(pos, len(fieldList))
-			nn.Type.Params.List = append(
-				fieldList[:pos],
-				append([]*dst.Field{dst.Clone(field).(*dst.Field)}, fieldList[pos:]...)...)
-			modified = true
-		}
-		return true
-	}
-
-	dstutil.Apply(df, pre, nil)
-	return
-}

@@ -223,6 +223,48 @@ func TestHasArgInCallExpr(t *testing.T) {
 }
 
 func TestDeleteArgFromCallExpr(t *testing.T) {
+	t.Run("delete within scope", func(t *testing.T) {
+		var src = `
+		package main
+		
+		func A() {
+			fmt.Println(1)
+ 		}
+		
+		func B() {
+			fmt.Println(1)
+		}
+		`
+
+		var expectedTemplate = `
+		package main
+		
+		func A() {
+			fmt.Println(%s)
+ 		}
+		
+		func B() {
+			fmt.Println(%s)
+		}
+    	`
+
+		cases := []struct{
+			funcName string
+			scope Scope
+			expectedFuncAArg string
+			expectedFuncBArg string
+		} {
+			{"Println", Scope{FuncName: "A"}, "", "1"},
+			{"Println", Scope{FuncName: "B"}, "1", ""},
+		}
+
+		for _, c := range cases {
+			df, _ := ParseSrcFileFromBytes([]byte(src))
+			assert.True(t, DeleteArgFromCallExpr(df, c.scope, c.funcName, &dst.BasicLit{Kind: token.INT, Value: "1"}))
+			buf := printToBuf(df)
+			assertCodesEqual(t, fmt.Sprintf(expectedTemplate, c.expectedFuncAArg, c.expectedFuncBArg), buf.String())
+		}
+	})
 	t.Run("delete multiple args", func(t *testing.T) {
 		var src = `
 		package main
@@ -276,16 +318,16 @@ func TestDeleteArgFromCallExpr(t *testing.T) {
 
 		var buf *bytes.Buffer
 
-		assert.True(t, DeleteArgFromCallExpr(df, "Println", &dst.BasicLit{Kind: token.INT, Value: "3"}))
+		assert.True(t, DeleteArgFromCallExpr(df, EmptyScope, "Println", &dst.BasicLit{Kind: token.INT, Value: "3"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected1, buf.String())
-		assert.False(t, DeleteArgFromCallExpr(df, "Println", &dst.BasicLit{Kind: token.INT, Value: "3"}))
+		assert.False(t, DeleteArgFromCallExpr(df, EmptyScope, "Println", &dst.BasicLit{Kind: token.INT, Value: "3"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected1, buf.String())
-		assert.True(t, DeleteArgFromCallExpr(df, "Println", &dst.BasicLit{Kind: token.INT, Value: "2"}))
+		assert.True(t, DeleteArgFromCallExpr(df, EmptyScope, "Println", &dst.BasicLit{Kind: token.INT, Value: "2"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected2, buf.String())
-		assert.True(t, DeleteArgFromCallExpr(df, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}))
+		assert.True(t, DeleteArgFromCallExpr(df, EmptyScope, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected3, buf.String())
 	})
@@ -318,7 +360,7 @@ func TestDeleteArgFromCallExpr(t *testing.T) {
 		df, _ := ParseSrcFileFromBytes([]byte(src))
 
 		var buf *bytes.Buffer
-		assert.True(t, DeleteArgFromCallExpr(df, "hello", &dst.BasicLit{Kind: token.INT, Value: "1"}))
+		assert.True(t, DeleteArgFromCallExpr(df, EmptyScope, "hello", &dst.BasicLit{Kind: token.INT, Value: "1"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected, buf.String())
 	})
@@ -355,7 +397,7 @@ func TestDeleteArgFromCallExpr(t *testing.T) {
 		df, _ := ParseSrcFileFromBytes([]byte(src))
 
 		var buf *bytes.Buffer
-		assert.True(t, DeleteArgFromCallExpr(df, "hello", &dst.BasicLit{Kind: token.INT, Value: "1"}))
+		assert.True(t, DeleteArgFromCallExpr(df, EmptyScope, "hello", &dst.BasicLit{Kind: token.INT, Value: "1"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected, buf.String())
 	})
@@ -398,13 +440,55 @@ func TestDeleteArgFromCallExpr(t *testing.T) {
 		df, _ := ParseSrcFileFromBytes([]byte(src))
 
 		var buf *bytes.Buffer
-		assert.True(t, DeleteArgFromCallExpr(df, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}))
+		assert.True(t, DeleteArgFromCallExpr(df, EmptyScope, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected, buf.String())
 	})
 }
 
 func TestAddArgToCallExpr(t *testing.T) {
+	t.Run("add within scope", func(t *testing.T) {
+		var src = `
+		package main
+
+		func A() {
+			fmt.Println()
+		}
+
+		func B() {
+			fmt.Println()
+		}
+ 		`
+
+		var expectedTemplate = `
+		package main
+
+		func A() {
+			fmt.Println(%s)
+		}
+
+		func B() {
+			fmt.Println(%s)
+		}
+		`
+
+		cases := []struct{
+			scope Scope
+			expectedFuncAArg string
+			expectedFuncBArg string
+		} {
+			{Scope{FuncName: "A"}, "1", ""},
+			{Scope{FuncName: "B"}, "", "1"},
+		}
+
+		for _, c := range cases {
+			df, _ := ParseSrcFileFromBytes([]byte(src))
+			assert.True(t, AddArgToCallExpr(df, c.scope, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}, 0))
+			buf := printToBuf(df)
+			assertCodesEqual(t, fmt.Sprintf(expectedTemplate, c.expectedFuncAArg, c.expectedFuncBArg), buf.String())
+		}
+	})
+
 	t.Run("add param to empty call", func(t *testing.T) {
 		var src = `
 		package main
@@ -444,7 +528,7 @@ func TestAddArgToCallExpr(t *testing.T) {
 			df, _ := ParseSrcFileFromBytes([]byte(src))
 
 			var buf *bytes.Buffer
-			assert.True(t, AddArgToCallExpr(df, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}, c.pos))
+			assert.True(t, AddArgToCallExpr(df, EmptyScope, "Println", &dst.BasicLit{Kind: token.INT, Value: "1"}, c.pos))
 			buf = printToBuf(df)
 			assertCodesEqual(t, expected, buf.String())
 		}
@@ -494,7 +578,7 @@ func TestAddArgToCallExpr(t *testing.T) {
 			expected := fmt.Sprintf(expectedTemplate, c.expectedArgs)
 
 			df, _ := ParseSrcFileFromBytes([]byte(src))
-			assert.True(t, AddArgToCallExpr(df, "Println", c.arg, c.pos))
+			assert.True(t, AddArgToCallExpr(df, EmptyScope, "Println", c.arg, c.pos))
 			buf = printToBuf(df)
 			assertCodesEqual(t, expected, buf.String())
 		}
@@ -545,7 +629,7 @@ func TestAddArgToCallExpr(t *testing.T) {
 			expected := fmt.Sprintf(expectedTemplate, c.expectedArgs)
 
 			df, _ := ParseSrcFileFromBytes([]byte(src))
-			assert.True(t, AddArgToCallExpr(df, "Println", c.arg, c.pos))
+			assert.True(t, AddArgToCallExpr(df, EmptyScope, "Println", c.arg, c.pos))
 			buf = printToBuf(df)
 			assertCodesEqual(t, expected, buf.String())
 		}
@@ -584,7 +668,76 @@ func TestAddArgToCallExpr(t *testing.T) {
 
 		df, _ := ParseSrcFileFromBytes([]byte(src))
 		var buf *bytes.Buffer
-		assert.True(t, true, AddArgToCallExpr(df, "fn", dst.NewIdent("fctx"), 0))
+		assert.True(t, true, AddArgToCallExpr(df, EmptyScope, "fn", dst.NewIdent("fctx"), 0))
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
+}
+
+
+func TestSetMethodOnReceiver(t *testing.T) {
+	t.Run("case1: fmt", func(t *testing.T) {
+		var src = `
+		package main
+
+		import "fmt"
+		
+		func main() {
+			fmt.Println()
+		}
+		`
+
+		var expected = `
+		package main
+
+		import "fmt"
+
+		func main() {
+			fmt.Panicln()
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		var buf *bytes.Buffer
+		assert.True(t, SetMethodOnReceiver(df, EmptyScope, "fmt", "Println", "Panicln"))
+		buf = printToBuf(df)
+		assertCodesEqual(t, expected, buf.String())
+	})
+
+	t.Run("case2", func(t *testing.T) {
+		var src = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContext(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+
+		var expected = `
+		package main
+
+		func rpc(ctx context.Context, hashKey string, timeout time.Duration, fn func(*AccountServiceClient) error) error {
+			return clientThrift.RpcWithContextV2(ctx, hashKey, timeout, func(c interface{}) error {
+				ct, ok := c.(*AccountServiceClient)
+				if ok {
+					return fn(ct)
+				} else {
+					return fmt.Errorf("reflect client thrift error")
+				}
+			})
+		}
+		`
+
+		df, _ := ParseSrcFileFromBytes([]byte(src))
+		var buf *bytes.Buffer
+		assert.True(t, SetMethodOnReceiver(df, EmptyScope, "clientThrift", "RpcWithContext", "RpcWithContextV2"))
 		buf = printToBuf(df)
 		assertCodesEqual(t, expected, buf.String())
 	})
