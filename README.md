@@ -73,4 +73,4 @@ AddFieldToFuncDeclParams(df *dst.File, funcName string, field *dst.Field, pos in
 
 ## TODO
 
--[ ] support scope
+-[x] support scope
