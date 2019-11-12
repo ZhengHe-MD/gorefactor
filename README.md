@@ -10,7 +10,7 @@ this module provides some basic utilities for you to do code migration on large 
 [![GitHub license](https://img.shields.io/github/license/ZhengHe-MD/gorefactor.svg)](https://github.com/ZhengHe-MD/gorefactor/blob/master/LICENSE)
 ![GitHub release](https://img.shields.io/github/release-pre/ZhengHe-MD/gorefactor.svg)
 
-> NOTE: I found that using dst/ast module to parse src code with all dependencies can be very time-consuming and error-prone because there are dash-imports and dot-imports. So I often comment out the import block in the preprocess phase and uncomment that back in the postprocess phase. 
+> NOTE: I found that using dst/ast module to parse src code with all dependencies can be very time-consuming and error-prone because there are underscore-imports and dot-imports. So I often comment out the import block in the preprocess phase and uncomment that back in the postprocess phase. 
 
 ## Installation
 
