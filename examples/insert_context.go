@@ -64,7 +64,7 @@ func main() {
 		},
 	}, 0)
 
-	gorefactor.AddArgToCallExpr(df, "f", &dst.CallExpr{
+	gorefactor.AddArgToCallExpr(df, gorefactor.EmptyScope, "f", &dst.CallExpr{
 		Fun: &dst.Ident{
 			Name: "TODO",
 			Path: "context",
